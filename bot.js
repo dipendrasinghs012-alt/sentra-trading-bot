@@ -41,37 +41,33 @@ bot.command('sentiment', async (ctx) => {
     }, 1000);
 });
 
-// Advanced DexScreener Engine (Array Mismatch Fixed Permanently)
+// Array Index Bracket Fixed Permanently [0]
 bot.command('price', async (ctx) => {
     const text = ctx.message.text.split(' ');
-    if (text.length < 2) return ctx.reply('⚠️ Coin ka name/ticker dalein. Example: /price SOL');
+    if (text.length < 2) return ctx.reply('⚠️ Coin ka short name dalein. Example: /price SOL');
     
     const ticker = text.toUpperCase();
     ctx.reply(`💰 Fetching real-time DEX network price for $${ticker}...`);
     
     try {
         const response = await axios.get(`https://dexscreener.com{ticker}`);
-        const pairs = response.data.pairs;
         
-        // Yahan [0] lagana zaroori tha array reading ke liye
-        if (pairs && pairs.length > 0 && pairs[0]) {
-            const bestPair = pairs[0]; 
+        if (response.data && response.data.pairs && response.data.pairs.length > 0) {
+            // Yahan brackets [0] lagana mandatory tha data filter open karne ke liye
+            const bestPair = response.data.pairs[0]; 
             const priceUsd = bestPair.priceUsd || '0.00';
-            const priceNative = bestPair.priceNative || '0.00';
             const volume24h = bestPair.volume ? bestPair.volume.h24 : 'N/A';
             const dexName = (bestPair.dexId || 'DEX').toUpperCase();
-            const quoteSymbol = bestPair.quoteToken ? bestPair.quoteToken.symbol : 'USD';
             
             ctx.reply(`🟢 *Live DEX Price for $${ticker}:*\n\n` +
                       `💵 Price: *$${priceUsd} USD*\n` +
-                      `⛓️ Native Price: ${priceNative} ${quoteSymbol}\n` +
-                      `📊 24h Volume: $${volume24h}\n` +
+                      `📊 24h Volume: $${volume24h || 'N/A'}\n` +
                       `🏛️ Exchange: ${dexName} (${bestPair.chainId || 'Solana'})`, { parse_mode: 'Markdown' });
         } else {
-            ctx.reply(`❌ Token $${ticker} DexScreener par nahi mila. Dobara check karein.`);
+            ctx.reply(`❌ Token $${ticker} market pairs me nahi mila. Correct short name use karein.`);
         }
     } catch (error) {
-        ctx.reply('⚠️ Pipeline refresh ho rahi hai, 5 second baad dobara try karein.');
+        ctx.reply('⚠️ Pipeline response timeout. Ek baar dobara try karein.');
     }
 });
 
