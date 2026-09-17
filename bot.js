@@ -54,7 +54,7 @@ bot.command('price', async (ctx) => {
         
         if (response.data && response.data.pairs && response.data.pairs.length > 0) {
             // Shift function se pehla object bina brackets ke automatic bahar nikal aata hai
-            const bestPair = response.data.pairs.shift(); 
+            const bestPair = response.data.pairs[0]; 
             const priceUsd = bestPair.priceUsd || '0.00';
             const volume24h = bestPair.volume ? bestPair.volume.h24 : 'N/A';
             const dexName = (bestPair.dexId || 'DEX').toUpperCase();
