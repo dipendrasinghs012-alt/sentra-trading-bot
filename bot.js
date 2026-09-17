@@ -41,7 +41,7 @@ bot.command('sentiment', async (ctx) => {
     }, 1000);
 });
 
-// Array Index Bracket Fixed Permanently [0]
+// Price Engine (Using Array Shift Method - 100% Bracket-Free Fix)
 bot.command('price', async (ctx) => {
     const text = ctx.message.text.split(' ');
     if (text.length < 2) return ctx.reply('⚠️ Coin ka short name dalein. Example: /price SOL');
@@ -53,8 +53,8 @@ bot.command('price', async (ctx) => {
         const response = await axios.get(`https://dexscreener.com{ticker}`);
         
         if (response.data && response.data.pairs && response.data.pairs.length > 0) {
-            // Yahan brackets [0] lagana mandatory tha data filter open karne ke liye
-            const bestPair = response.data.pairs[0]; 
+            // Shift function se pehla object bina brackets ke automatic bahar nikal aata hai
+            const bestPair = response.data.pairs.shift(); 
             const priceUsd = bestPair.priceUsd || '0.00';
             const volume24h = bestPair.volume ? bestPair.volume.h24 : 'N/A';
             const dexName = (bestPair.dexId || 'DEX').toUpperCase();
