@@ -13,23 +13,23 @@ const getCryptoSentiment = async (ticker) => {
     };
 };
 
-// Welcome Menu
+// Welcome Menu (Now 100% Pure English for Global Audience)
 bot.start((ctx) => {
     ctx.reply(`🚀 Welcome to Sentra Trading AI Pro! 🚀\n\n` +
-              `Main aapko Solana market ka sabse tez aur advanced data dunga.\n\n` +
-              `Commands:\n` +
-              `📝 /sentiment [TICKER] - Check Twitter Hype & AI Score\n` +
-              `💰 /price [TICKER] - Live Solana & Crypto Price\n` +
-              `🛡️ /audit [CONTRACT] - Check Token Rug-Pull & Scam Safety`);
+              `I will provide you with the fastest and most advanced analytical data for the Solana market.\n\n` +
+              `Available Commands:\n` +
+              `📝 /sentiment [TICKER] - Track Twitter/X Hype & AI Score\n` +
+              `💰 /price [TICKER] - Fetch Live DEX & Crypto Prices\n` +
+              `🛡️ /audit [CONTRACT] - Scan Smart Contracts for Rug-Pulls & Scams`);
 });
 
-// AI Sentiment Command (Fixed Argument Processing)
+// AI Sentiment Command
 bot.command('sentiment', async (ctx) => {
     const messageText = ctx.message.text.trim();
-    const parts = messageText.split(/\s+/); // Splits by any whitespace
+    const parts = messageText.split(/\s+/);
     
     if (parts.length < 2) {
-        return ctx.reply('⚠️ Target coin ka name dein.\nExample: /sentiment SOL');
+        return ctx.reply('⚠️ Please provide a target coin name.\nExample: /sentiment SOL');
     }
     
     const token = parts[1].toUpperCase();
@@ -45,13 +45,13 @@ bot.command('sentiment', async (ctx) => {
     }, 1000);
 });
 
-// Price Command (Fixed Argument Processing)
+// Price Command
 bot.command('price', async (ctx) => {
     const messageText = ctx.message.text.trim();
     const parts = messageText.split(/\s+/);
     
     if (parts.length < 2) {
-        return ctx.reply('⚠️ Coin ka short name dalein. Example: /price SOL');
+        return ctx.reply('⚠️ Please provide a coin ticker.\nExample: /price SOL');
     }
     
     const textSymbol = parts[1].toUpperCase();
@@ -87,7 +87,7 @@ bot.command('audit', (ctx) => {
     const parts = messageText.split(/\s+/);
     
     if (parts.length < 2) {
-        return ctx.reply('⚠️ Token contract address dalein.\nExample: /audit 0xSolanaContractAddress...');
+        return ctx.reply('⚠️ Please provide a token contract address.\nExample: /audit 0xSolanaContractAddress...');
     }
     
     ctx.reply('🛡️ *Analyzing Smart Contract Security...*');
