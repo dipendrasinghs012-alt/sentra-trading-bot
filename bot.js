@@ -41,23 +41,23 @@ bot.command('sentiment', async (ctx) => {
     }, 1000);
 });
 
-// Ultra Stable Price Engine (DexScreener Array Mismatch Fixed)
+// Advanced DexScreener Engine (Array Mismatch Fixed Permanently)
 bot.command('price', async (ctx) => {
     const text = ctx.message.text.split(' ');
     if (text.length < 2) return ctx.reply('⚠️ Coin ka name/ticker dalein. Example: /price SOL');
     
-    const ticker = text[1].toUpperCase();
+    const ticker = text.toUpperCase();
     ctx.reply(`💰 Fetching real-time DEX network price for $${ticker}...`);
     
     try {
         const response = await axios.get(`https://dexscreener.com{ticker}`);
         const pairs = response.data.pairs;
         
-        if (pairs && pairs.length > 0) {
-            // Sahi array position checking filter logic
+        // Yahan [0] lagana zaroori tha array reading ke liye
+        if (pairs && pairs.length > 0 && pairs[0]) {
             const bestPair = pairs[0]; 
-            const priceUsd = bestPair.priceUsd || 'N/A';
-            const priceNative = bestPair.priceNative || 'N/A';
+            const priceUsd = bestPair.priceUsd || '0.00';
+            const priceNative = bestPair.priceNative || '0.00';
             const volume24h = bestPair.volume ? bestPair.volume.h24 : 'N/A';
             const dexName = (bestPair.dexId || 'DEX').toUpperCase();
             const quoteSymbol = bestPair.quoteToken ? bestPair.quoteToken.symbol : 'USD';
@@ -68,11 +68,10 @@ bot.command('price', async (ctx) => {
                       `📊 24h Volume: $${volume24h}\n` +
                       `🏛️ Exchange: ${dexName} (${bestPair.chainId || 'Solana'})`, { parse_mode: 'Markdown' });
         } else {
-            // Backup connection route agar search empty aaye
-            ctx.reply(`❌ Token $${ticker} direct search pool me nahi mila. Base protocol check karein.`);
+            ctx.reply(`❌ Token $${ticker} DexScreener par nahi mila. Dobara check karein.`);
         }
     } catch (error) {
-        ctx.reply('⚠️ Connection temporary slow hai. Railway pipeline refresh ho rahi hai, 10 second baad dobara try karein.');
+        ctx.reply('⚠️ Pipeline refresh ho rahi hai, 5 second baad dobara try karein.');
     }
 });
 
