@@ -19,7 +19,7 @@ bot.start((ctx) => {
               `Main aapko Solana market ka sabse tez aur advanced data dunga.\n\n` +
               `Commands:\n` +
               `📝 /sentiment [TICKER] - Check Twitter Hype & AI Score\n` +
-              `💰 /price [TICKER] - Live Solana & Crypto Price (Smart Engine)\n` +
+              `💰 /price [TICKER] - Live Solana & Crypto Price (Direct Engine)\n` +
               `🛡️ /audit [CONTRACT] - Check Token Rug-Pull & Scam Safety`);
 });
 
@@ -41,33 +41,28 @@ bot.command('sentiment', async (ctx) => {
     }, 1000);
 });
 
-// Price Engine (Using Array Shift Method - 100% Bracket-Free Fix)
+// Direct Data Engine - No More Array Crash Errors!
 bot.command('price', async (ctx) => {
     const text = ctx.message.text.split(' ');
-    if (text.length < 2) return ctx.reply('⚠️ Coin ka short name dalein. Example: /price SOL');
+    if (text.length < 2) return ctx.reply('⚠️ Example: /price solana ya /price bitcoin');
     
-    const ticker = text.toUpperCase();
-    ctx.reply(`💰 Fetching real-time DEX network price for $${ticker}...`);
+    const tokenName = text[1].toLowerCase();
+    ctx.reply(`💰 Fetching live index price for $${tokenName.toUpperCase()}...`);
     
     try {
-        const response = await axios.get(`https://dexscreener.com{ticker}`);
+        const response = await axios.get(`https://coingecko.com{tokenName}&vs_currencies=usd`);
         
-        if (response.data && response.data.pairs && response.data.pairs.length > 0) {
-            // Shift function se pehla object bina brackets ke automatic bahar nikal aata hai
-            const bestPair = response.data.pairs[0]; 
-            const priceUsd = bestPair.priceUsd || '0.00';
-            const volume24h = bestPair.volume ? bestPair.volume.h24 : 'N/A';
-            const dexName = (bestPair.dexId || 'DEX').toUpperCase();
-            
-            ctx.reply(`🟢 *Live DEX Price for $${ticker}:*\n\n` +
-                      `💵 Price: *$${priceUsd} USD*\n` +
-                      `📊 24h Volume: $${volume24h || 'N/A'}\n` +
-                      `🏛️ Exchange: ${dexName} (${bestPair.chainId || 'Solana'})`, { parse_mode: 'Markdown' });
+        if (response.data && response.data[tokenName]) {
+            const price = response.data[tokenName].usd;
+            ctx.reply(`🟢 *Live Market Price:*\n\n` +
+                      `💵 1 $${tokenName.toUpperCase()} = *$${price} USD*\n` +
+                      `🏛️ Index: CoinGecko Global\n` +
+                      `⚡ Update Status: Real-Time Synced`, { parse_mode: 'Markdown' });
         } else {
-            ctx.reply(`❌ Token $${ticker} market pairs me nahi mila. Correct short name use karein.`);
+            ctx.reply(`❌ Token name data missing. Kripya full spelling use karein (Example: /price solana, /price bitcoin, /price ethereum).`);
         }
     } catch (error) {
-        ctx.reply('⚠️ Pipeline response timeout. Ek baar dobara try karein.');
+        ctx.reply('⚠️ Engine response delayed. Ek baar dobara try karein.');
     }
 });
 
