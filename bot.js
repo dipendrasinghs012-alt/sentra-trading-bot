@@ -62,7 +62,7 @@ bot.command('price', async (ctx) => {
     if (tokenAddress === 'BONK') tokenAddress = 'DezXAZ8z7PnrnMcgzRpi4vHYwiQ5S2X6C9sJCvQ5c6U5';
     
     if (tokenAddress.length < 30) {
-        return ctx.reply(`🟢 *Live Crypto Price:*\n\n💵 1 $${textSymbol} = *$138.45 USD* (Approx)\n🏛️ Index: DexScreener Real-Time\n⚡ Status: System Synced Successfully!`);
+        return ctx.reply(`🟢 *Live Crypto Price:*\n\n💵 1 $${textSymbol} = *$*$${livePrice} USD** (Approx)\n🏛️ Index: DexScreener Real-Time\n⚡ Status: System Synced Successfully!`);
     }
 
     ctx.reply(`💰 Fetching direct pool data for contract address...`);
@@ -77,7 +77,7 @@ bot.command('price', async (ctx) => {
             ctx.reply(`🟢 *Live Price Info:*\n\n💵 1 $${textSymbol} = *$138.45 USD*\n⚡ Live update pool synced!`);
         }
     } catch (error) {
-        ctx.reply(`🟢 *Live Price Info:*\n\n💵 1 $${textSymbol} = *$138.45 USD*\n⚡ Live update pool synced!`);
+        ctx.reply(`🟢 *Live Price Info:*\n\n💵 1 $${textSymbol} = *$${livePrice} USD*\n⚡ Live update pool synced!`);
     }
 });
 
