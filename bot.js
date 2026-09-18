@@ -74,7 +74,7 @@ bot.command('price', async (ctx) => {
             const price = pair.priceUsd || '0.00';
             ctx.reply(`🟢 *Live DEX Price:*\n\n💵 Price: *$${price} USD*\n🏛️ Platform: ${pair.dexId.toUpperCase()}\n📊 24h Vol: $${pair.volume.h24}`, { parse_mode: 'Markdown' });
         } else {
-            ctx.reply(`🟢 *Live Price Info:*\n\n💵 1 $${textSymbol} = *$138.45 USD*\n⚡ Live update pool synced!`);
+            ctx.reply(`🟢 *Live Price Info:*\n\n💵 1 $${textSymbol} = *$${livePrice} USD*\n⚡ Live update pool synced!`);
         }
     } catch (error) {
         ctx.reply(`🟢 *Live Price Info:*\n\n💵 1 $${textSymbol} = *$${livePrice} USD*\n⚡ Live update pool synced!`);
