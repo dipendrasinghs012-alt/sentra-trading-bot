@@ -13,7 +13,7 @@ const getCryptoSentiment = async (ticker) => {
     };
 };
 
-// Welcome Menu (Now 100% Pure English for Global Audience)
+// Welcome Menu (100% Pure English for Global Audience)
 bot.start((ctx) => {
     ctx.reply(`🚀 Welcome to Sentra Trading AI Pro! 🚀\n\n` +
               `I will provide you with the fastest and most advanced analytical data for the Solana market.\n\n` +
@@ -45,39 +45,47 @@ bot.command('sentiment', async (ctx) => {
     }, 1000);
 });
 
-// Price Command
+// Price Command - FIXED & REAL-TIME
 bot.command('price', async (ctx) => {
     const messageText = ctx.message.text.trim();
     const parts = messageText.split(/\s+/);
     
     if (parts.length < 2) {
-        return ctx.reply('⚠️ Please provide a coin ticker.\nExample: /price SOL');
+        return ctx.reply('⚠️ Please provide a coin ticker or contract address.\nExample: /price SOL');
     }
     
-    const textSymbol = parts[1].toUpperCase();
-    let tokenAddress = textSymbol;
+    let queryParam = parts[1].trim();
+    const textSymbol = queryParam.toUpperCase();
     
-    if (tokenAddress === 'SOL') tokenAddress = 'So11111111111111111111111111111111111111112';
-    if (tokenAddress === 'USDC') tokenAddress = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-    if (tokenAddress === 'BONK') tokenAddress = 'DezXAZ8z7PnrnMcgzRpi4vHYwiQ5S2X6C9sJCvQ5c6U5';
+    // Solana ecosystem standard mint address hardcoding for accuracy
+    if (textSymbol === 'SOL') queryParam = 'So11111111111111111111111111111111111111112';
+    if (textSymbol === 'USDC') queryParam = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+    if (textSymbol === 'BONK') queryParam = 'DezXAZ8z7PnrnMcgzRpi4vHYwiQ5S2X6C9sJCvQ5c6U5';
     
-    if (tokenAddress.length < 30) {
-        return ctx.reply(`🟢 *Live Crypto Price:*\n\n💵 1 $${textSymbol} = *$*$${livePrice} USD** (Approx)\n🏛️ Index: DexScreener Real-Time\n⚡ Status: System Synced Successfully!`);
-    }
-
-    ctx.reply(`💰 Fetching direct pool data for contract address...`);
+    ctx.reply(`💰 Fetching live pool data from DexScreener...`);
     
     try {
-        const response = await axios.get(`https://dexscreener.com{tokenAddress}`);
+        // Correct and stable Search API Endpoint from DexScreener
+        const response = await axios.get(`https://dexscreener.com{queryParam}`);
+        
         if (response.data && response.data.pairs && response.data.pairs.length > 0) {
+            // Fetching the top/most active liquid pair
             const pair = response.data.pairs[0];
             const price = pair.priceUsd || '0.00';
-            ctx.reply(`🟢 *Live DEX Price:*\n\n💵 Price: *$${price} USD*\n🏛️ Platform: ${pair.dexId.toUpperCase()}\n📊 24h Vol: $${pair.volume.h24}`, { parse_mode: 'Markdown' });
+            const baseTokenSymbol = pair.baseToken ? pair.baseToken.symbol : textSymbol;
+            const volume24h = pair.volume ? (pair.volume.h24 || '0.00') : '0.00';
+            
+            return ctx.reply(`🟢 *Live DEX Price:*\n\n` +
+                             `💵 Token: *$${baseTokenSymbol.toUpperCase()}*\n` +
+                             `💰 Price: *$${price} USD*\n` +
+                             `🏛️ Platform: ${pair.dexId.toUpperCase()}\n` +
+                             `📊 24h Vol: $${Number(volume24h).toLocaleString()}`, { parse_mode: 'Markdown' });
         } else {
-            ctx.reply(`🟢 *Live Price Info:*\n\n💵 1 $${textSymbol} = *$${livePrice} USD*\n⚡ Live update pool synced!`);
+            return ctx.reply(`❌ *$${textSymbol}* ki live price information nahi mili. Kripya ticker ya contract address check karein.`, { parse_mode: 'Markdown' });
         }
     } catch (error) {
-        ctx.reply(`🟢 *Live Price Info:*\n\n💵 1 $${textSymbol} = *$${livePrice} USD*\n⚡ Live update pool synced!`);
+        console.error("DexScreener API Error:", error.message);
+        return ctx.reply(`⚠️ Live market data fetch karne me dikkat aa rahi hai. Kripya thodi der baad try karein.`);
     }
 });
 
