@@ -1,112 +1,95 @@
+require('dotenv').config();
 const { Telegraf } = require('telegraf');
 const axios = require('axios');
 
-// Cloud Environment Token Load
-const bot = new Telegraf(process.env.BOT_TOKEN || "8863457607:AAGCTT1T2j8uUraH4rAxSFSDPOgNHZe3IW0");
+// Token from Railway environment variable
+const bot = new Telegraf(process.env.SentraTrading_bot);
 
-// Live Mock AI Sentiment Engine
-const getCryptoSentiment = async (ticker) => {
-    const mockSentiment = Math.floor(Math.random() * 31) + 65; // 65% to 95%
-    return {
-        score: mockSentiment,
-        status: mockSentiment > 80 ? '🔥 HIGHLY POSITIVE (Whales Accumulating)' : '✅ STABLE GROWTH'
-    };
+if (!process.env.SentraTrading_bot) {
+    console.error('❌ SentraTrading_bot env variable not set. Set it before starting the bot.');
+    process.exit(1);
+}
+
+// Known Solana mint addresses for common tickers
+const KNOWN_MINTS = {
+    SOL: 'So11111111111111111111111111111111111111112',
+    USDC: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+    BONK: 'DezXAZ8z7PnrnMcgzRpi4vHYwiQ5S2X6C9sJCvQ5c6U5'
 };
 
-// Welcome Menu (100% Pure English for Global Audience)
+function resolveMint(input) {
+    const upper = input.toUpperCase();
+    return KNOWN_MINTS[upper] || input;
+}
+
+// ---------- Welcome Menu ----------
 bot.start((ctx) => {
     ctx.reply(`🚀 Welcome to Sentra Trading AI Pro! 🚀\n\n` +
-              `I will provide you with the fastest and most advanced analytical data for the Solana market.\n\n` +
+              `Real-time analytical data for the Solana market.\n\n` +
               `Available Commands:\n` +
-              `📝 /sentiment [TICKER] - Track Twitter/X Hype & AI Score\n` +
-              `💰 /price [TICKER] - Fetch Live DEX & Crypto Prices\n` +
-              `🛡️ /audit [CONTRACT] - Scan Smart Contracts for Rug-Pulls & Scams`);
+              `📝 /sentiment [TICKER/MINT] - Market-behavior sentiment (live DEX data)\n` +
+              `💰 /price [TICKER/MINT] - Fetch Live DEX & Crypto Prices\n` +
+              `🛡️ /audit [MINT ADDRESS] - Real Solana token safety scan (RugCheck)`);
 });
 
-// AI Sentiment Command
-bot.command('sentiment', async (ctx) => {
-    const messageText = ctx.message.text.trim();
-    const parts = messageText.split(/\s+/);
-    
-    if (parts.length < 2) {
-        return ctx.reply('⚠️ Please provide a target coin name.\nExample: /sentiment SOL');
-    }
-    
-    const token = parts[1].toUpperCase();
-    ctx.reply(`🔍 Scanning social channels for $${token}...`);
-    
-    const sentiment = await getCryptoSentiment(token);
-    setTimeout(() => {
-        ctx.reply(`📊 *AI Pro Sentiment Report ($${token}):*\n\n` +
-                  `• Social Score: ${sentiment.score}%\n` +
-                  `• Market Trend: ${sentiment.status}\n` +
-                  `• Whale Alert: 3 big smart wallets accumulated in past 2 hours!\n` +
-                  `• Recommendation: Strong bullish structure forming on social database.`, { parse_mode: 'Markdown' });
-    }, 1000);
-});
-
-// Price Command - FIXED & REAL-TIME
+// ---------- /price ----------
 bot.command('price', async (ctx) => {
-    const messageText = ctx.message.text.trim();
-    const parts = messageText.split(/\s+/);
-    
+    const parts = ctx.message.text.trim().split(/\s+/);
     if (parts.length < 2) {
-        return ctx.reply('⚠️ Please provide a coin ticker or contract address.\nExample: /price SOL');
+        return ctx.reply('⚠️ Please provide a coin ticker or mint address.\nExample: /price SOL');
     }
-    
-    let queryParam = parts[1].trim();
-    const textSymbol = queryParam.toUpperCase();
-    
-    // Solana ecosystem standard mint address hardcoding for accuracy
-    if (textSymbol === 'SOL') queryParam = 'So11111111111111111111111111111111111111112';
-    if (textSymbol === 'USDC') queryParam = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
-    if (textSymbol === 'BONK') queryParam = 'DezXAZ8z7PnrnMcgzRpi4vHYwiQ5S2X6C9sJCvQ5c6U5';
-    
-    ctx.reply(`💰 Fetching live pool data from DexScreener...`);
-    
+
+    const rawInput = parts[1].trim();
+    const mint = resolveMint(rawInput);
+    const displaySymbol = rawInput.toUpperCase();
+
+    ctx.reply('💰 Fetching live pool data from DexScreener...');
+
     try {
-        // Correct and stable Search API Endpoint from DexScreener
-        const response = await axios.get(`https://dexscreener.com{queryParam}`);
-        
-        if (response.data && response.data.pairs && response.data.pairs.length > 0) {
-            // Fetching the top/most active liquid pair
-            const pair = response.data.pairs[0];
+        const response = await axios.get(`https://api.dexscreener.com/latest/dex/tokens/${mint}`);
+        const pairs = response.data && response.data.pairs;
+
+        if (pairs && pairs.length > 0) {
+            const pair = pairs[0];
             const price = pair.priceUsd || '0.00';
-            const baseTokenSymbol = pair.baseToken ? pair.baseToken.symbol : textSymbol;
-            const volume24h = pair.volume ? (pair.volume.h24 || '0.00') : '0.00';
-            
+            const baseSymbol = pair.baseToken ? pair.baseToken.symbol : displaySymbol;
+            const volume24h = pair.volume ? (pair.volume.h24 || 0) : 0;
+
             return ctx.reply(`🟢 *Live DEX Price:*\n\n` +
-                             `💵 Token: *$${baseTokenSymbol.toUpperCase()}*\n` +
+                             `💵 Token: *$${baseSymbol.toUpperCase()}*\n` +
                              `💰 Price: *$${price} USD*\n` +
-                             `🏛️ Platform: ${pair.dexId.toUpperCase()}\n` +
+                             `🏛️ Platform: ${pair.dexId ? pair.dexId.toUpperCase() : 'N/A'}\n` +
                              `📊 24h Vol: $${Number(volume24h).toLocaleString()}`, { parse_mode: 'Markdown' });
         } else {
-            return ctx.reply(`❌ *$${textSymbol}* ki live price information nahi mili. Kripya ticker ya contract address check karein.`, { parse_mode: 'Markdown' });
+            return ctx.reply(`❌ No live price data found for *$${displaySymbol}*. Check the ticker or mint address.`, { parse_mode: 'Markdown' });
         }
     } catch (error) {
-        console.error("DexScreener API Error:", error.message);
-        return ctx.reply(`⚠️ Live market data fetch karne me dikkat aa rahi hai. Kripya thodi der baad try karein.`);
+        console.error('DexScreener API Error (price):', error.message);
+        return ctx.reply('⚠️ Could not fetch market data right now. Please try again shortly.');
     }
 });
 
-// Anti-Rug Smart Contract Auditor
-bot.command('audit', (ctx) => {
-    const messageText = ctx.message.text.trim();
-    const parts = messageText.split(/\s+/);
-    
+// ---------- /sentiment (real market-behavior proxy, no external key needed) ----------
+bot.command('sentiment', async (ctx) => {
+    const parts = ctx.message.text.trim().split(/\s+/);
     if (parts.length < 2) {
-        return ctx.reply('⚠️ Please provide a token contract address.\nExample: /audit 0xSolanaContractAddress...');
+        return ctx.reply('⚠️ Please provide a target coin ticker or mint address.\nExample: /sentiment SOL');
     }
-    
-    ctx.reply('🛡️ *Analyzing Smart Contract Security...*');
-    setTimeout(() => {
-        ctx.reply(`✅ *Sentra Audit Security Report:*\n\n` +
-                  `• HoneyPot Check: Passed (Token is 100% sellable)\n` +
-                  `• Mint Authority: Disabled (Dev cannot print more coins)\n` +
-                  `• Liquidity Status: 95% Locked/Burnt 🔥\n` +
-                  `• Danger Level: Low Risk (Safe to Trade)`);
-    }, 1500);
-});
 
-bot.launch();
-console.log('🚀 Sentra AI Pro Engine deployed successfully!');
+    const rawInput = parts[1].trim();
+    const mint = resolveMint(rawInput);
+    const displaySymbol = rawInput.toUpperCase();
+
+    ctx.reply(`🔍 Analyzing live market behavior for $${displaySymbol}...`);
+
+    try {
+        const response = await axios.get(`https://api.dexscreener.com/latest/dex/tokens/${mint}`);
+        const pairs = response.data && response.data.pairs;
+
+        if (!pairs || pairs.length === 0) {
+            return ctx.reply(`❌ No market data found for *$${displaySymbol}* to analyze.`, { parse_mode: 'Markdown' });
+        }
+
+        // Use the most liquid pair
+        const pair = pairs.reduce((best, p) => {
+            const liq = p.liquidity ? p.liquidity.usd || 0 : 0;
